@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  @apply bg-paper text-navy font-sans antialiased;
+}
+
+@layer components {
+  /* Small uppercase tracked-out eyebrow label above headlines. */
+  .eyebrow {
+    @apply text-[0.7rem] font-medium uppercase tracking-eyebrow;
+  }
+
+  /* Pill-shaped dark CTA. */
+  .btn-pill {
+    @apply inline-flex items-center justify-center rounded-full bg-navy px-7 py-3
+      text-sm font-medium text-white transition-opacity hover:opacity-90
+      focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+      focus-visible:outline-navy disabled:opacity-50;
+  }
+
+  /* Dashed 1px card used on light sections. */
+  .card-dashed {
+    @apply rounded-2xl border border-dashed border-navy/25 bg-white/40 p-6;
+  }
+
+  /* Solid navy card with white text used to highlight one option. */
+  .card-navy {
+    @apply rounded-2xl bg-navy p-6 text-white;
+  }
+
+  .container-tr {
+    @apply mx-auto w-full max-w-6xl px-6;
+  }
+
+  .field-label {
+    @apply eyebrow mb-2 block text-navy/60;
+  }
+
+  .field-input {
+    @apply w-full rounded-xl border border-navy/15 bg-white px-4 py-3 text-sm
+      text-navy placeholder:text-navy/35 focus:border-navy/40 focus:outline-none;
+  }
+}
