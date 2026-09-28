@@ -3,6 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 
 export const metadata = { title: "Network & legal · The Capital Room" };
 
+// Render at request time so the Supabase query never runs during the build
+// (avoids build-time failures when env/DB isn't reachable from the builder).
+export const dynamic = "force-dynamic";
+
 type LegalService = { id: string; title: string | null; description: string | null };
 type VcPartner = { id: string; name: string | null; firm: string | null; focus_areas: string[] | null };
 
