@@ -10,7 +10,11 @@ function required(name: string, value: string | undefined): string {
 export const publicEnv = {
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ?? "",
   supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "",
-  siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  // Falls back to Vercel's auto-injected deployment host when the site URL
+  // isn't set yet, so the app works on the first deploy before a URL exists.
+  siteUrl:
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000"),
 };
 
 // Server-only — throws if referenced without being set.
