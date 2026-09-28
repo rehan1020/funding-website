@@ -26,10 +26,29 @@ export const serverEnv = {
     return process.env.SUPABASE_DECK_BUCKET ?? "pitch-decks";
   },
   get paymentProvider() {
-    return process.env.PAYMENT_PROVIDER ?? "stripe";
+    return process.env.PAYMENT_PROVIDER ?? "cashfree";
+  },
+  // Cashfree PG credentials (full API). "App ID" = x-client-id, "Secret Key" =
+  // x-client-secret. The Secret Key also signs webhooks, so no separate webhook
+  // secret is needed for Cashfree.
+  get cashfreeAppId() {
+    return required("CASHFREE_APP_ID", process.env.CASHFREE_APP_ID);
+  },
+  get cashfreeSecretKey() {
+    return required("CASHFREE_SECRET_KEY", process.env.CASHFREE_SECRET_KEY);
+  },
+  // "production" (default) or "sandbox". Drives the API base URL and the mode
+  // passed to the browser SDK.
+  get cashfreeMode(): "production" | "sandbox" {
+    return process.env.CASHFREE_ENV === "sandbox" ? "sandbox" : "production";
+  },
+  get cashfreeApiBase() {
+    return this.cashfreeMode === "sandbox"
+      ? "https://sandbox.cashfree.com/pg"
+      : "https://api.cashfree.com/pg";
   },
   // Hosted payment form URL (e.g. a Cashfree Payment Form link). Used by the
-  // "hosted_form" provider — no API keys required.
+  // legacy "hosted_form" provider — no API keys required.
   get paymentFormUrl() {
     return required("PAYMENT_FORM_URL", process.env.PAYMENT_FORM_URL);
   },

@@ -1,8 +1,15 @@
 import { Eyebrow } from "@/components/Eyebrow";
+import { ConfirmPriorityPayment } from "@/components/ConfirmPriorityPayment";
 
 export const metadata = { title: "Submission received · The Capital Room" };
 
-export default function SubmittedPage() {
+export default function SubmittedPage({
+  searchParams,
+}: {
+  searchParams: { submission?: string };
+}) {
+  const submissionId = searchParams.submission ?? null;
+
   return (
     <section className="bg-mint-gradient min-h-[calc(100vh-8rem)]">
       <div className="container-tr py-28 text-center">
@@ -24,6 +31,7 @@ export default function SubmittedPage() {
             A member of our team will contact you on WhatsApp if there is a
             relevant next conversation.
           </p>
+          {submissionId && <ConfirmPriorityPayment submissionId={submissionId} />}
         </div>
       </div>
     </section>

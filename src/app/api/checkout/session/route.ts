@@ -19,10 +19,13 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  // Verify the submission exists and is priority.
+  // Verify the submission exists and is priority, and pull founder contact
+  // details Cashfree needs (customer_phone is required).
   const { data: submission } = await admin
     .from("submissions")
-    .select("id, review_type, startups!inner(work_email)")
+    .select(
+      "id, review_type, startups!inner(work_email, founders(name, email, phone))"
+    )
     .eq("id", parsed.data.submissionId)
     .single();
 
@@ -33,15 +36,21 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "This submission is not priority." }, { status: 400 });
   }
   const startup = (submission as any).startups;
+  const founder = startup?.founders;
 
   const provider = getPaymentProvider();
   const checkout = await provider.createCheckout({
     submissionId: submission.id,
     amount: serverEnv.priorityAmount,
     currency: serverEnv.priorityCurrency,
-    customerEmail: startup?.work_email ?? "",
-    successUrl: `${publicEnv.siteUrl}/submitted`,
+    customerEmail: founder?.email ?? startup?.work_email ?? "",
+    customerName: founder?.name ?? undefined,
+    customerPhone: founder?.phone ?? undefined,
+    // Cashfree sends the founder back here after checkout; the page re-verifies
+    // server-side via Get Order before showing "confirmed".
+    successUrl: `${publicEnv.siteUrl}/submitted?submission=${submission.id}`,
     cancelUrl: `${publicEnv.siteUrl}/pay/priority?submission=${submission.id}`,
+    notifyUrl: `${publicEnv.siteUrl}/api/webhooks/payment`,
   });
 
   // Record a pending payment keyed on the provider ref (idempotency anchor).
@@ -67,5 +76,11 @@ export async function POST(request: Request) {
     ip: clientIp(request.headers),
   });
 
-  return NextResponse.json({ redirectUrl: checkout.redirectUrl });
+  // Cashfree: hand the session to the browser SDK. Legacy/hosted providers:
+  // a plain redirect URL.
+  return NextResponse.json({
+    paymentSessionId: checkout.paymentSessionId ?? null,
+    mode: checkout.mode ?? null,
+    redirectUrl: checkout.redirectUrl ?? null,
+  });
 }

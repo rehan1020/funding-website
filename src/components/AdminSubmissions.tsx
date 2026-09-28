@@ -19,6 +19,9 @@ export interface AdminRow {
   email: string | null;
   phone: string | null;
   deckUrl: string | null;
+  paymentStatus: string | null;
+  paymentAmount: number | null;
+  paymentCurrency: string | null;
 }
 
 const STATUSES = [
@@ -57,6 +60,43 @@ function waLink(phone: string | null, message: string): string | null {
   const digits = phone.replace(/[^0-9]/g, "");
   if (!digits) return null;
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
+// Payment badge for priority submissions. Note: with the hosted-form flow a
+// 'pending' row only means checkout was opened — the Cashfree dashboard is the
+// source of truth for money actually received. Confirm a real payment by
+// setting the submission status to "Paid · priority".
+function PaymentBadge({ row }: { row: AdminRow }) {
+  if (row.reviewType !== "priority") return null;
+
+  const amount =
+    row.paymentAmount != null
+      ? new Intl.NumberFormat("en-IN", {
+          style: "currency",
+          currency: row.paymentCurrency ?? "INR",
+          maximumFractionDigits: 0,
+        }).format(row.paymentAmount)
+      : null;
+
+  const { label, cls } = (() => {
+    switch (row.paymentStatus) {
+      case "succeeded":
+        return { label: "Payment confirmed", cls: "bg-emerald-100 text-emerald-700" };
+      case "pending":
+        return { label: "Checkout opened · unconfirmed", cls: "bg-amber-100 text-amber-800" };
+      case "failed":
+        return { label: "Payment failed", cls: "bg-red-100 text-red-700" };
+      default:
+        return { label: "No checkout yet", cls: "bg-navy/5 text-navy/50" };
+    }
+  })();
+
+  return (
+    <span className={clsx("rounded-full px-2.5 py-0.5 text-[0.65rem]", cls)}>
+      {label}
+      {amount ? ` · ${amount}` : ""}
+    </span>
+  );
 }
 
 export function AdminSubmissions({ initialRows }: { initialRows: AdminRow[] }) {
@@ -128,6 +168,11 @@ export function AdminSubmissions({ initialRows }: { initialRows: AdminRow[] }) {
                   <p className="mt-1 text-sm text-navy/60">
                     {row.contactName} · {row.email} · {row.phone}
                   </p>
+                  {row.reviewType === "priority" && (
+                    <div className="mt-2">
+                      <PaymentBadge row={row} />
+                    </div>
+                  )}
                 </div>
                 <span
                   className={clsx(
