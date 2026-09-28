@@ -1,5 +1,5 @@
 import { Eyebrow } from "@/components/Eyebrow";
-import { SubmitGate } from "@/components/SubmitGate";
+import { SubmitForm } from "@/components/SubmitForm";
 
 export const metadata = { title: "Submit a pitch · The Capital Room" };
 
@@ -19,7 +19,7 @@ export default function SubmitPage() {
         </div>
 
         <div className="mx-auto mt-12 max-w-2xl rounded-3xl bg-white p-8 shadow-sm md:p-10">
-          <SubmitGate />
+          <SubmitForm />
         </div>
       </div>
     </section>

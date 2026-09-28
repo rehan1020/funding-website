@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { submissionSchema } from "@/lib/validation";
 import { audit, clientIp } from "@/lib/audit";
 
-// All writes here run through the service-role client. The client never writes
-// to startups/submissions directly (RLS grants no such policy).
+// Public, unauthenticated intake. Founders do NOT log in. All writes run
+// through the service-role client; the client never writes these tables
+// directly (RLS grants no client policy).
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = submissionSchema.safeParse(body);
@@ -16,39 +16,31 @@ export async function POST(request: Request) {
     );
   }
   const input = parsed.data;
-
-  // Founder identity comes from the authenticated magic-link session, not the
-  // request body — we never trust a client-supplied founder id.
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json(
-      { error: "Please sign in with your work email to submit." },
-      { status: 401 }
-    );
-  }
-
   const admin = createAdminClient();
 
-  // Ensure a founders row exists for this authenticated user.
-  const { error: founderErr } = await admin
+  // Upsert a founder record keyed by email (no auth account). Also refresh the
+  // contact name / phone in case they changed on a repeat submission.
+  const { data: founder, error: founderErr } = await admin
     .from("founders")
-    .upsert({ id: user.id, email: user.email }, { onConflict: "id" });
-  if (founderErr) {
-    return NextResponse.json({ error: "Could not record founder." }, { status: 500 });
+    .upsert(
+      { email: input.email, name: input.contactName, phone: input.phone },
+      { onConflict: "email" }
+    )
+    .select("id")
+    .single();
+  if (founderErr || !founder) {
+    return NextResponse.json({ error: "Could not record contact." }, { status: 500 });
   }
 
-  // Create the startup owned by this founder.
   const { data: startup, error: startupErr } = await admin
     .from("startups")
     .insert({
-      founder_id: user.id,
+      founder_id: founder.id,
       company_name: input.companyName,
-      work_email: input.workEmail,
+      work_email: input.email,
       pitch_summary: input.pitchSummary,
+      website: input.website || null,
+      socials: input.socials || null,
       deck_url: input.deckPath ?? null,
     })
     .select("id")
@@ -57,8 +49,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not save your startup." }, { status: 500 });
   }
 
-  // Create the submission. Priority stays 'queued' until payment succeeds;
-  // status is only advanced to 'paid_priority' by the verified webhook.
+  // Priority stays 'queued' until payment succeeds (advanced only by the
+  // verified webhook). Queue position is computed server-side.
   const { data: submission, error: subErr } = await admin
     .from("submissions")
     .insert({
@@ -72,11 +64,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Could not create submission." }, { status: 500 });
   }
 
-  // Queue position is computed server-side, never set by the client.
   await admin.rpc("recompute_queue_positions");
 
   await audit(admin, {
-    actor: user.id,
     action: "submission.created",
     targetTable: "submissions",
     targetId: submission.id,

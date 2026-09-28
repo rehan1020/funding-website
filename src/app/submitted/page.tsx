@@ -11,9 +11,8 @@ export default function SubmittedPage() {
           Your place in the room is confirmed.
         </h1>
         <p className="mx-auto mt-6 max-w-lg text-navy/70">
-          We have received your materials. You will receive a private email link
-          when your review moves forward, so there is no public queue information
-          to expose.
+          We have received your materials. Our team reviews every submission and
+          will reach out on WhatsApp when your review moves forward.
         </p>
 
         <div className="mx-auto mt-12 max-w-md rounded-3xl bg-white p-8 text-left shadow-sm">
@@ -22,8 +21,8 @@ export default function SubmittedPage() {
             Submission under review
           </h2>
           <p className="mt-3 text-sm text-navy/65">
-            A member of our team will contact you by email if there is a relevant
-            next conversation.
+            A member of our team will contact you on WhatsApp if there is a
+            relevant next conversation.
           </p>
         </div>
       </div>

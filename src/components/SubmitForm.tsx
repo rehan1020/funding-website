@@ -73,9 +73,13 @@ export function SubmitForm() {
     }
 
     const payload = {
+      contactName: String(form.get("contactName") ?? ""),
+      email: String(form.get("email") ?? ""),
+      phone: String(form.get("phone") ?? ""),
       companyName: String(form.get("companyName") ?? ""),
-      workEmail: String(form.get("workEmail") ?? ""),
       pitchSummary: String(form.get("pitchSummary") ?? ""),
+      website: String(form.get("website") ?? ""),
+      socials: String(form.get("socials") ?? ""),
       reviewType,
       deckPath,
     };
@@ -102,31 +106,26 @@ export function SubmitForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div>
-        <label htmlFor="companyName" className="field-label">
-          Company name
-        </label>
-        <input
-          id="companyName"
-          name="companyName"
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Field label="Your name" name="contactName" placeholder="Jane Founder" required />
+        <Field
+          label="Email"
+          name="email"
+          type="email"
+          placeholder="you@company.com"
           required
-          className="field-input"
-          placeholder="Your company"
         />
       </div>
 
-      <div>
-        <label htmlFor="workEmail" className="field-label">
-          Work email
-        </label>
-        <input
-          id="workEmail"
-          name="workEmail"
-          type="email"
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Field
+          label="WhatsApp number"
+          name="phone"
+          type="tel"
+          placeholder="+91 90000 00000"
           required
-          className="field-input"
-          placeholder="founder@company.com"
         />
+        <Field label="Company name" name="companyName" placeholder="Your company" required />
       </div>
 
       <div>
@@ -140,6 +139,15 @@ export function SubmitForm() {
           rows={4}
           className="field-input resize-y"
           placeholder="What are you building, for whom, and what are you raising?"
+        />
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Field label="Website (optional)" name="website" type="url" placeholder="https://" />
+        <Field
+          label="Socials (optional)"
+          name="socials"
+          placeholder="LinkedIn / X / etc."
         />
       </div>
 
@@ -191,6 +199,36 @@ export function SubmitForm() {
         )}
       </div>
     </form>
+  );
+}
+
+function Field({
+  label,
+  name,
+  type = "text",
+  placeholder,
+  required,
+}: {
+  label: string;
+  name: string;
+  type?: string;
+  placeholder?: string;
+  required?: boolean;
+}) {
+  return (
+    <div>
+      <label htmlFor={name} className="field-label">
+        {label}
+      </label>
+      <input
+        id={name}
+        name={name}
+        type={type}
+        required={required}
+        className="field-input"
+        placeholder={placeholder}
+      />
+    </div>
   );
 }
 
