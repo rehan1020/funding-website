@@ -39,6 +39,32 @@ export interface PaymentProvider {
   verifyWebhook(rawBody: string, headers: Headers): Promise<VerifiedWebhookEvent>;
 }
 
+// --- Hosted-form adapter -----------------------------------------------------
+// For a no-code hosted payment page (e.g. a Cashfree Payment Form link) where
+// we have only the URL — no API keys, no server order creation, no webhook.
+// The founder is redirected to the form; payment confirmation is MANUAL: an
+// admin verifies the payment in the gateway dashboard and sets the submission
+// to 'paid_priority' in the admin panel. Upgrading to the full API later is
+// just swapping PAYMENT_PROVIDER + implementing a provider below.
+class HostedFormProvider implements PaymentProvider {
+  readonly name = "hosted_form";
+
+  async createCheckout(params: CheckoutParams): Promise<CheckoutResult> {
+    // No gateway round-trip; redirect straight to the hosted form. We mint our
+    // own ref (one priority payment per submission) so the pending payment row
+    // is idempotent on retries.
+    return {
+      redirectUrl: serverEnv.paymentFormUrl,
+      providerRef: `form_${params.submissionId}`,
+    };
+  }
+
+  async verifyWebhook(_rawBody: string, _headers: Headers): Promise<VerifiedWebhookEvent> {
+    // Hosted form has no signed webhook here; confirmation is manual.
+    throw new Error("Hosted-form provider does not receive webhooks.");
+  }
+}
+
 // --- Placeholder adapter -----------------------------------------------------
 // Replace the internals of createCheckout / verifyWebhook with the chosen
 // gateway's SDK calls. The signature-verification step is mandatory; the stub
@@ -65,8 +91,10 @@ class PlaceholderProvider implements PaymentProvider {
 
 export function getPaymentProvider(): PaymentProvider {
   switch (serverEnv.paymentProvider) {
+    case "hosted_form":
+      return new HostedFormProvider();
+    // case "cashfree": return new CashfreeProvider();  // full API (needs keys)
     // case "stripe":   return new StripeProvider();
-    // case "razorpay": return new RazorpayProvider();
     default:
       return new PlaceholderProvider();
   }

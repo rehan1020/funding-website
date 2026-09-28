@@ -28,6 +28,11 @@ export const serverEnv = {
   get paymentProvider() {
     return process.env.PAYMENT_PROVIDER ?? "stripe";
   },
+  // Hosted payment form URL (e.g. a Cashfree Payment Form link). Used by the
+  // "hosted_form" provider — no API keys required.
+  get paymentFormUrl() {
+    return required("PAYMENT_FORM_URL", process.env.PAYMENT_FORM_URL);
+  },
   get paymentSecretKey() {
     return required("PAYMENT_SECRET_KEY", process.env.PAYMENT_SECRET_KEY);
   },

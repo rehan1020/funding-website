@@ -26,9 +26,10 @@ export default function PriorityPage({
         <div className="mx-auto mt-12 max-w-xl rounded-3xl bg-white p-8 text-left text-navy md:p-10">
           <Eyebrow className="text-navy/50">Accelerated review</Eyebrow>
           <p className="mt-4 text-navy/75">
-            Priority review is a paid, accelerated service. Payment and
-            confirmation are completed through a secure checkout step. Once
-            approved, you receive a private tracking link by email.
+            Priority review is a paid, accelerated service. You&apos;ll be taken
+            to our secure payment page to complete it. Once your payment is
+            confirmed, our team moves your submission to the front of the queue
+            and follows up on WhatsApp.
           </p>
           <div className="mt-7">
             <CheckoutButton submissionId={submissionId} />
