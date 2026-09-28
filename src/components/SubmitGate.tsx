@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { publicEnv } from "@/lib/env";
 import { SubmitForm } from "@/components/SubmitForm";
 
 type Phase = "loading" | "signed-out" | "sent" | "signed-in";
@@ -31,7 +30,9 @@ export function SubmitGate() {
     setError(null);
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${publicEnv.siteUrl}/auth/callback?next=/submit` },
+      // Use the live origin the founder is actually on, so the magic link
+      // always returns to this deployment (not a build-time env guess).
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/submit` },
     });
     setSending(false);
     if (error) setError(error.message);
