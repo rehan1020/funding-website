@@ -20,7 +20,7 @@ const NETWORK_PARTNERS: { name: string; category: string }[] = [
   { name: "3one4 Capital", category: "Venture capital" },
   { name: "Brick Ventures", category: "Venture capital" },
   { name: "Expert Dojo", category: "Accelerator" },
-  { name: "Corporate CapitalVentures Pvt. Ltd.", category: "Venture capital" },
+  { name: "Corporate Capital Ventures Pvt. Ltd.", category: "Venture capital" },
   { name: "LvlUp Ventures", category: "Venture capital" },
   { name: "Blue Ventures", category: "Venture capital" },
 ];
