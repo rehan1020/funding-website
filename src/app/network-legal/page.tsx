@@ -8,22 +8,32 @@ export const metadata = { title: "Network & legal · The Capital Room" };
 export const dynamic = "force-dynamic";
 
 type LegalService = { id: string; title: string | null; description: string | null };
-type VcPartner = { id: string; name: string | null; firm: string | null; focus_areas: string[] | null };
+
+// Curated network roster, shown with permission. Kept in-code (not the DB) so
+// the list is version-controlled and deploys with the site.
+const NETWORK_PARTNERS: { name: string; category: string }[] = [
+  { name: "Arali Ventures", category: "Venture capital" },
+  { name: "Indo-Japan Business Council (IJBC)", category: "Business council" },
+  { name: "J.P. Morgan", category: "Institutional" },
+  { name: "BlackRock", category: "Institutional" },
+  { name: "F3 Venture Capital Company Limited", category: "Venture capital" },
+  { name: "3one4 Capital", category: "Venture capital" },
+  { name: "Brick Ventures", category: "Venture capital" },
+  { name: "Expert Dojo", category: "Accelerator" },
+  { name: "Corporate CapitalVentures Pvt. Ltd.", category: "Venture capital" },
+  { name: "LvlUp Ventures", category: "Venture capital" },
+  { name: "Blue Ventures", category: "Venture capital" },
+];
 
 export default async function NetworkLegalPage() {
   const supabase = createClient();
 
-  // Public reads only — RLS restricts vc_partners to is_public = true.
-  const [{ data: services }, { data: partners }] = await Promise.all([
-    supabase
-      .from("legal_services")
-      .select("id, title, description")
-      .order("sort_order", { ascending: true }),
-    supabase.from("vc_partners").select("id, name, firm, focus_areas"),
-  ]);
+  const { data: services } = await supabase
+    .from("legal_services")
+    .select("id, title, description")
+    .order("sort_order", { ascending: true });
 
   const legalServices = (services ?? []) as LegalService[];
-  const vcPartners = (partners ?? []) as VcPartner[];
 
   return (
     <>
@@ -61,29 +71,28 @@ export default async function NetworkLegalPage() {
         <div className="container-tr py-24 text-center">
           <Eyebrow>Connected capital</Eyebrow>
           <h2 className="mt-4 font-display text-4xl text-navy">
-            Partner names are shared with permission.
+            An active network of investors and partners.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-navy/70">
-            We keep investor relationships selective and current. Confirmed
-            partner names, mandates, and relevant introduction paths can be added
-            here when approved.
+            We maintain selective, current relationships across venture capital,
+            institutional capital, and accelerators. A selection of the names in
+            our network, shared with permission:
           </p>
 
-          {vcPartners.length > 0 && (
-            <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-3">
-              {vcPartners.map((p) => (
-                <div key={p.id} className="rounded-2xl bg-white/70 p-6 text-left">
-                  <h3 className="font-display text-xl text-navy">{p.name}</h3>
-                  {p.firm && <p className="mt-1 text-sm text-navy/60">{p.firm}</p>}
-                  {p.focus_areas && p.focus_areas.length > 0 && (
-                    <p className="eyebrow mt-3 text-navy/45">
-                      {p.focus_areas.join(" · ")}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="mx-auto mt-12 grid max-w-4xl gap-5 sm:grid-cols-2 md:grid-cols-3">
+            {NETWORK_PARTNERS.map((p) => (
+              <div key={p.name} className="rounded-2xl bg-white/70 p-6 text-left">
+                <h3 className="font-display text-xl text-navy">{p.name}</h3>
+                <p className="eyebrow mt-3 text-navy/45">{p.category}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mx-auto mt-10 max-w-xl text-sm text-navy/55">
+            Introductions are made selectively and only where there is a genuine
+            fit. Inclusion here reflects a network relationship, not an
+            endorsement of any individual submission.
+          </p>
         </div>
       </section>
     </>
