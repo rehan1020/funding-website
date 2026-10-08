@@ -54,6 +54,12 @@ export default async function NetworkLegalPage() {
   if (submissions) {
     for (const s of submissions) {
       const startup = s.startups as any;
+      
+      // Hide test submissions from the public network page
+      if (startup.company_name.toLowerCase() === "testing") {
+        continue;
+      }
+      
       if (startup.deck_url) {
         const { data: signed } = await adminDb.storage
           .from(serverEnv.deckBucket)
