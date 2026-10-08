@@ -1,5 +1,7 @@
 import { Eyebrow } from "@/components/Eyebrow";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { serverEnv } from "@/lib/env";
 
 export const metadata = { title: "Network & legal · The Capital Room" };
 
@@ -27,6 +29,7 @@ const NETWORK_PARTNERS: { name: string; category: string }[] = [
 
 export default async function NetworkLegalPage() {
   const supabase = createClient();
+  const adminDb = createAdminClient();
 
   const { data: services } = await supabase
     .from("legal_services")
@@ -34,6 +37,37 @@ export default async function NetworkLegalPage() {
     .order("sort_order", { ascending: true });
 
   const legalServices = (services ?? []) as LegalService[];
+
+  // Fetch recent submissions for the preview section
+  const { data: submissions } = await adminDb
+    .from("submissions")
+    .select(`
+      id,
+      startups!inner (
+        company_name, deck_url
+      )
+    `)
+    .order("submitted_at", { ascending: false })
+    .limit(6);
+
+  const decks = [];
+  if (submissions) {
+    for (const s of submissions) {
+      const startup = s.startups as any;
+      if (startup.deck_url) {
+        const { data: signed } = await adminDb.storage
+          .from(serverEnv.deckBucket)
+          .createSignedUrl(startup.deck_url, 60 * 60); // 1 hour expiry
+        if (signed?.signedUrl) {
+          decks.push({
+            id: s.id,
+            companyName: startup.company_name,
+            deckUrl: signed.signedUrl,
+          });
+        }
+      }
+    }
+  }
 
   return (
     <>
@@ -65,6 +99,49 @@ export default async function NetworkLegalPage() {
           </div>
         </div>
       </section>
+
+      {/* Recent Submissions — Preview */}
+      {decks.length > 0 && (
+        <section className="bg-paper border-t border-navy/10">
+          <div className="container-tr py-24">
+            <Eyebrow>Deal flow</Eyebrow>
+            <h2 className="mt-4 font-display text-4xl text-navy">
+              Recent submissions
+            </h2>
+            <p className="mt-4 max-w-xl text-navy/70">
+              A glimpse at the latest companies in our queue. Full access is restricted to approved network partners.
+            </p>
+
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {decks.map((deck) => (
+                <div key={deck.id} className="group relative overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-sm">
+                  {/* PDF iframe preview with interaction blocked */}
+                  <div className="relative aspect-[4/3] w-full overflow-hidden bg-navy/5">
+                    <iframe 
+                      src={`${deck.deckUrl}#page=1&view=FitH&toolbar=0&navpanes=0&scrollbar=0`}
+                      className="absolute inset-0 h-full w-full pointer-events-none"
+                      tabIndex={-1}
+                    />
+                    {/* Overlay to enforce locked state & prevent clicking/scrolling */}
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-navy/20 backdrop-blur-[2px]">
+                      <div className="rounded-full bg-navy/90 px-4 py-2 text-sm font-medium text-white shadow-lg flex items-center gap-2">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Rest locked
+                      </div>
+                    </div>
+                  </div>
+                  <div className="p-5 border-t border-navy/5">
+                    <h3 className="font-display text-xl text-navy">{deck.companyName}</h3>
+                    <p className="mt-1 text-sm text-navy/60">Pitch deck submitted</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Partners — mint */}
       <section className="bg-mint">
